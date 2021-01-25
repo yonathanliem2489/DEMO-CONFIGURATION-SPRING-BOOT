@@ -5,6 +5,8 @@ import static org.springframework.web.reactive.function.server.ServerResponse.ok
 import demo.configuration.service.handler.DirectoryHandler;
 import demo.configuration.service.handler.UserHandler;
 import demo.configuration.service.model.dto.UserRequest;
+import java.util.Objects;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,7 +23,7 @@ public class RestEndpointConfiguration {
 
   @Bean
   RouterFunction<ServerResponse> userEndpoint(
-    UserHandler userHandler) {
+    ObjectProvider<UserHandler> userHandlerObjectProvider) {
 
     /**
      * CRUD Endpoints
@@ -31,7 +33,9 @@ public class RestEndpointConfiguration {
         .and(RequestPredicates.path("demo-configuration/user"));
     HandlerFunction<ServerResponse> createFunction =
         serverRequest -> serverRequest.bodyToMono(UserRequest.class)
-            .flatMap(userHandler::create)
+            .flatMap(userRequest -> Objects
+                .requireNonNull(userHandlerObjectProvider.getIfUnique())
+                  .create(userRequest))
             .flatMap(userResponse -> ok().bodyValue(userResponse));
 
     RequestPredicate existPredicate = RequestPredicates
@@ -39,7 +43,9 @@ public class RestEndpointConfiguration {
         .and(RequestPredicates.path("demo-configuration/user/exist/{name}"));
     HandlerFunction<ServerResponse> existFunction =
         serverRequest -> Mono.fromCallable(() -> serverRequest.pathVariable("name"))
-            .flatMap(userHandler::exist)
+            .flatMap(name -> Objects
+                .requireNonNull(userHandlerObjectProvider.getIfUnique())
+                .exist(name))
             .flatMap(result -> ok().bodyValue(result));
 
     RequestPredicate retrievePredicate = RequestPredicates
@@ -47,7 +53,9 @@ public class RestEndpointConfiguration {
         .and(RequestPredicates.path("demo-configuration/user/{name}"));
     HandlerFunction<ServerResponse> retrieveFunction =
         serverRequest -> Mono.fromCallable(() -> serverRequest.pathVariable("name"))
-            .flatMap(userHandler::retrieve)
+            .flatMap(name -> Objects
+                .requireNonNull(userHandlerObjectProvider.getIfUnique())
+                .retrieve(name))
             .flatMap(result -> ok().bodyValue(result));
 
     return RouterFunctions.route()
@@ -58,12 +66,13 @@ public class RestEndpointConfiguration {
   }
 
   @Bean
-  RouterFunction<ServerResponse> directoryEndpoint(DirectoryHandler directoryHandler) {
+  RouterFunction<ServerResponse> directoryEndpoint(
+      ObjectProvider<DirectoryHandler> directoryHandlerObjectProvider) {
     RequestPredicate handlePredicate = RequestPredicates
         .method(HttpMethod.GET)
         .and(RequestPredicates.path("demo-configuration/directory"));
     HandlerFunction<ServerResponse> handleFunction =
-        serverRequest -> directoryHandler.handle()
+        serverRequest -> Objects.requireNonNull(directoryHandlerObjectProvider.getIfUnique()).handle()
             .then(ok().build());
 
     return RouterFunctions.route(handlePredicate, handleFunction);

@@ -7,7 +7,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import reactor.core.publisher.Mono;
 
-public class ExampleAutoConfiguration {
+public class HandlerAutoConfiguration {
 
   @Bean
   AutoConfigurationHandlerA autoConfigurationService(ObjectProvider<UserCache> userCache) {

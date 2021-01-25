@@ -10,10 +10,13 @@ import reactor.core.publisher.Mono;
 public class DefaultUserHandler implements UserHandler {
 
   private final UserCache userCache;
+  private final HandlerProperties properties;
 
-  public DefaultUserHandler(UserCache userCache) {
+  public DefaultUserHandler(UserCache userCache,
+      HandlerProperties properties) {
     Assert.notNull(userCache, "userCache must be provide");
     this.userCache = userCache;
+    this.properties = properties;
   }
 
   @Override

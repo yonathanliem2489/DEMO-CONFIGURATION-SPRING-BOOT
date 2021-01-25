@@ -2,7 +2,10 @@ package demo.configuration.service.rest;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
+import demo.configuration.ExampleRestEndpointConfiguration;
 import demo.configuration.RestEndpointConfiguration;
+import demo.configuration.service.handler.AutoConfigurationHandlerA;
+import demo.configuration.service.handler.AutoConfigurationHandlerB;
 import demo.configuration.service.handler.UserHandler;
 import demo.configuration.service.model.dto.UserRequest;
 import demo.configuration.service.model.dto.UserResponse;
@@ -25,89 +28,71 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+
+
 @SpringBootTest
 @AutoConfigureWebTestClient
-@ImportAutoConfiguration({
-    ReactiveWebServerFactoryAutoConfiguration.class,
-    JacksonAutoConfiguration.class,
-    CodecsAutoConfiguration.class,
-    WebFluxAutoConfiguration.class,
-    RestEndpointConfiguration.class
-})
-public class UserEndpointTests {
+@AutoConfigureRestEndpoints
+@ImportAutoConfiguration(ExampleRestEndpointConfiguration.class)
+public class ExampleRestEndpointTests {
 
   @Autowired
   private WebTestClient testClient;
 
   @MockBean
-  private UserHandler userHandler;
+  private AutoConfigurationHandlerA handlerA;
+
+  @MockBean
+  private AutoConfigurationHandlerB handlerB;
 
   @Test
-  void whenCreateUser_thenSuccess() {
+  void whenExampleA_thenSuccess() {
 
-    UserRequest request = UserRequest.builder()
-        .name("yonathan")
-        .age(30)
-        .birthDate(LocalDate.now().minusYears(30))
-        .build();
-    UserResponse response = UserResponse.builder()
-        .name("yonathan")
-        .age(30)
-        .birthDate(LocalDate.now().minusYears(30))
-        .build();
+    Mockito.when(handlerA.handle())
+        .thenReturn(Mono.empty());
 
-    Mockito.when(userHandler.create(request))
-        .thenReturn(Mono.just(response));
-
-    Flux<UserResponse> test = testClient.post()
+    Flux<String> test = testClient.get()
         .uri(uriBuilder -> uriBuilder
-            .path("/demo-configuration/user")
-            .build())
-        .accept(APPLICATION_JSON).contentType(APPLICATION_JSON)
-        .bodyValue(request)
-        .exchange()
-        .expectStatus().isEqualTo(HttpStatus.OK)
-        .returnResult(UserResponse.class)
-        .getResponseBody();
-
-    StepVerifier.create(test)
-        .expectSubscription().thenAwait()
-        .expectNextMatches(userResponse -> {
-          Assertions.assertEquals(response, userResponse);
-          return true;
-        })
-        .verifyComplete();
-  }
-
-  @Test
-  void whenRetrieveUser_thenSuccess() {
-    UserResponse response = UserResponse.builder()
-        .name("yonathan")
-        .age(30)
-        .birthDate(LocalDate.now().minusYears(30))
-        .build();
-
-    Mockito.when(userHandler.retrieve("yonathan"))
-        .thenReturn(Mono.just(response));
-
-    Flux<UserResponse> test = testClient.get()
-        .uri(uriBuilder -> uriBuilder
-            .path("/demo-configuration/user/yonathan")
+            .path("/demo-configuration/example-a")
             .build())
         .accept(APPLICATION_JSON)
         .exchange()
         .expectStatus().isEqualTo(HttpStatus.OK)
-        .returnResult(UserResponse.class)
+        .returnResult(String.class)
         .getResponseBody();
 
     StepVerifier.create(test)
         .expectSubscription().thenAwait()
-        .expectNextMatches(userResponse -> {
-
-          Assertions.assertEquals(response, userResponse);
-
+        .expectNextMatches(result -> {
+          Assertions.assertEquals("service A success", result);
           return true;
         })
         .verifyComplete();
   }
+
+  @Test
+  void whenExampleB_thenSuccess() {
+
+    Mockito.when(handlerB.handle())
+        .thenReturn(Mono.empty());
+
+    Flux<String> test = testClient.get()
+        .uri(uriBuilder -> uriBuilder
+            .path("/demo-configuration/example-b")
+            .build())
+        .accept(APPLICATION_JSON)
+        .exchange()
+        .expectStatus().isEqualTo(HttpStatus.OK)
+        .returnResult(String.class)
+        .getResponseBody();
+
+    StepVerifier.create(test)
+        .expectSubscription().thenAwait()
+        .expectNextMatches(result -> {
+          Assertions.assertEquals("service B success", result);
+          return true;
+        })
+        .verifyComplete();
+  }
+
 }

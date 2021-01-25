@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  demo.configuration.service.handler.ExampleAutoConfiguration
+  demo.configuration.service.handler.HandlerAutoConfiguration

@@ -14,7 +14,7 @@ import reactor.test.StepVerifier;
 
 @SpringBootTest(classes = TestingConfiguration.class, properties = {})
 @ImportAutoConfiguration({
-    ExampleAutoConfiguration.class
+    HandlerAutoConfiguration.class
 })
 public class AutoConfigurationHandlerATests {
 

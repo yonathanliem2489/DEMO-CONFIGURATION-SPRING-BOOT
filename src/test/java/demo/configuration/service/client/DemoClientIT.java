@@ -19,21 +19,19 @@ import org.springframework.boot.autoconfigure.web.reactive.function.client.Clien
 import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.util.Assert;
 import reactor.test.StepVerifier;
 
 @SpringBootTest(classes = TestingConfiguration.class, webEnvironment = WebEnvironment.NONE,
     properties = {
-
+        "logging.level.reactor.netty.http.client=trace",
+        "logging.level.org.springframework.web.reactive.function.client.ExchangeFunctions=DEBUG"
     })
 @ImportAutoConfiguration({JacksonAutoConfiguration.class, CodecsAutoConfiguration.class,
     ClientHttpConnectorAutoConfiguration.class, WebClientAutoConfiguration.class,
     ClientConfiguration.class
 })
-@MockServerSettings(ports = 9112)
-public class DemoClientTests {
+public class DemoClientIT {
 
   @Autowired
   private DemoClient client;
@@ -42,7 +40,7 @@ public class DemoClientTests {
   private ObjectMapper objectMapper;
 
   @Test
-  void whenSendRequest_thenShouldSuccess(MockServerClient mockServerClient)
+  void whenSendRequest_thenShouldSuccess()
       throws JsonProcessingException {
 
     UserRequest userRequest = UserRequest.builder()
@@ -50,21 +48,6 @@ public class DemoClientTests {
         .birthDate(LocalDate.now().minusYears(30))
         .name("yonathan")
         .build();
-
-    byte[] requestByte = objectMapper.writeValueAsBytes(userRequest);
-
-    byte[] responseByte = objectMapper.writeValueAsBytes(UserResponse.builder()
-        .age(30)
-        .birthDate(LocalDate.now().minusYears(30))
-        .name("yonathan")
-        .build());
-
-    mockServerClient.when(HttpRequest.request()
-      .withMethod("POST")
-      .withBody(requestByte)
-    ).respond(HttpResponse.response().withStatusCode(200)
-    .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-    .withBody(responseByte));
 
     StepVerifier.create(client.handle(userRequest))
         .expectSubscription().thenAwait()

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -47,10 +48,11 @@ public class UserHandlerTests {
   }
 
   @TestConfiguration
+  @EnableConfigurationProperties(HandlerProperties.class)
   static class SupportConfiguration {
     @Bean
-    UserHandler userHandler(UserCache userCache) {
-      return new DefaultUserHandler(userCache);
+    UserHandler userHandler(UserCache userCache, HandlerProperties properties) {
+      return new DefaultUserHandler(userCache, properties);
     }
   }
 }
